@@ -1,0 +1,1645 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,maximum-scale=1">
+<title>FPV DRONE 3D</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:monospace;-webkit-user-select:none;user-select:none;position:fixed;inset:0}
+#c{display:block;position:absolute;inset:0;width:100%;height:100%;background:#000;image-rendering:pixelated;image-rendering:-moz-crisp-edges;z-index:0}
+#hud{position:absolute;inset:0;pointer-events:none;color:#8fd4ff;font-family:monospace;text-shadow:1px 1px 0 #000;z-index:5}
+.hp{position:absolute;background:rgba(5,15,30,.65);border:1px solid rgba(90,180,255,.4);border-radius:5px;padding:3px 7px;font-size:11px;font-weight:bold;letter-spacing:1px;color:#eaf7ff}
+#hp1{top:6px;left:6px}#hp2{top:6px;right:6px;text-align:right}#hp3{top:6px;left:50%;margin-left:-55px;text-align:center;min-width:110px}
+#hp4{top:52px;left:6px}#hp5{top:52px;right:6px;text-align:right}
+#hud .lbl{font-size:8px;opacity:.6;letter-spacing:2px}
+#hud .v{font-size:14px;color:#fff;font-weight:bold}
+#mm{position:absolute;right:6px;top:96px;width:70px;height:70px;border-radius:50%;border:1px solid rgba(90,180,255,.5);background:rgba(5,15,30,.6)}
+#altBox{position:absolute;left:6px;top:96px;background:rgba(5,15,30,.65);border:1px solid rgba(0,255,200,.4);border-radius:5px;padding:3px 7px;font-size:11px;font-weight:bold;letter-spacing:1px;color:#7cf7c0}
+#altBox .lbl{font-size:8px;opacity:.6;letter-spacing:2px}
+#altBox .v{font-size:14px;color:#fff;font-weight:bold}
+#arrow{position:absolute;left:50%;top:50%;width:0;height:0;opacity:0;transition:opacity .2s;pointer-events:none;z-index:6}
+#arrow:before{content:'';position:absolute;left:-8px;top:-6px;border-left:11px solid #0fe;border-top:7px solid transparent;border-bottom:7px solid transparent;filter:drop-shadow(0 0 4px #0fe)}
+#cross{position:absolute;left:50%;top:50%;width:18px;height:18px;margin:-9px 0 0 -9px;opacity:.8;pointer-events:none}
+#cross:before{content:'';position:absolute;left:8px;top:0;width:2px;height:18px;background:#0fe}
+#cross:after{content:'';position:absolute;top:8px;left:0;height:2px;width:18px;background:#0fe}
+
+.pd{position:absolute;width:54px;height:54px;border:2px solid rgba(90,180,255,.5);background:rgba(15,40,70,.5);color:#cfeaff;font-size:22px;font-weight:bold;text-align:center;line-height:50px;border-radius:10px;pointer-events:auto;cursor:pointer;-webkit-user-select:none;user-select:none}
+.pd.active{background:rgba(0,190,255,.85);border-color:#0fe}
+#bU{left:70px;bottom:130px}#bD{left:70px;bottom:14px}#bL{left:10px;bottom:72px}#bR{left:130px;bottom:72px}
+
+.pd2{position:absolute;width:54px;height:54px;border:2px solid rgba(0,255,200,.55);background:rgba(0,60,50,.5);color:#7cf7c0;font-size:22px;font-weight:bold;text-align:center;line-height:50px;border-radius:10px;pointer-events:auto;cursor:pointer;-webkit-user-select:none;user-select:none}
+.pd2.active{background:rgba(0,255,200,.8);border-color:#7cf7c0;color:#003020}
+#bUp2{left:50%;margin-left:-60px;bottom:158px}
+#bDn2{left:50%;margin-left:6px;bottom:158px}
+
+#fire{position:absolute;left:50%;transform:translateX(-50%);bottom:94px;width:56px;height:56px;border-radius:50%;border:2px solid rgba(255,90,60,.85);background:radial-gradient(circle,rgba(255,130,60,.5),rgba(180,30,20,.3));color:#fff;font-size:11px;font-weight:bold;letter-spacing:1px;line-height:52px;text-align:center;pointer-events:auto;cursor:pointer;-webkit-user-select:none;user-select:none}
+#fire.active{background:radial-gradient(circle,rgba(255,220,60,.95),rgba(200,60,20,.7))}
+
+#ability{position:absolute;right:10px;bottom:94px;width:48px;height:48px;border-radius:50%;border:2px solid rgba(0,200,255,.85);background:radial-gradient(circle,rgba(0,200,255,.5),rgba(0,100,200,.3));color:#fff;font-size:22px;line-height:44px;text-align:center;font-weight:bold;display:none;pointer-events:auto;cursor:pointer;-webkit-user-select:none;user-select:none}
+#ability.ready{box-shadow:0 0 12px rgba(0,200,255,.9)}
+#ability.active{background:radial-gradient(circle,rgba(255,220,60,.9),rgba(255,140,20,.6));border-color:#ffd040}
+
+#overlay{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 40%,#0e1e33 0%,#030710 75%);color:#d8f0ff;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:14px;overflow-y:auto;z-index:10}
+#overlay.hide{display:none}
+#overlay h1{font-size:24px;letter-spacing:5px;color:#0fe;font-weight:800;margin-bottom:2px;text-shadow:0 0 12px rgba(0,220,255,.6)}
+#overlay .ver{font-size:9px;letter-spacing:3px;color:#5fe0ff;opacity:.6;margin-bottom:10px}
+#overlay .sub{font-size:10px;letter-spacing:3px;opacity:.5;margin-bottom:14px}
+.row{display:flex;gap:5px;justify-content:center;flex-wrap:wrap;margin-bottom:8px;max-width:100%}
+.opt{padding:7px 10px;border-radius:8px;border:1.5px solid rgba(90,180,255,.3);background:rgba(12,28,48,.65);color:#8fb8d8;font-family:inherit;font-size:10px;font-weight:bold;letter-spacing:1px;cursor:pointer}
+.opt.on{border-color:#0fe;color:#eafcff;background:linear-gradient(180deg,rgba(0,180,255,.35),rgba(0,120,255,.15))}
+.btn{padding:12px 32px;border-radius:30px;border:2px solid rgba(0,220,255,.6);background:linear-gradient(180deg,rgba(0,180,255,.25),rgba(0,120,255,.1));color:#eafcff;font-family:inherit;font-size:14px;font-weight:bold;letter-spacing:3px;cursor:pointer;margin:4px}
+.btn.small{padding:9px 22px;font-size:11px;letter-spacing:2px;border-color:rgba(0,255,200,.5);background:linear-gradient(180deg,rgba(0,255,200,.15),rgba(0,150,140,.06))}
+.btn.gold{border-color:rgba(255,200,80,.7);background:linear-gradient(180deg,rgba(255,200,80,.25),rgba(180,120,20,.1));color:#fff8d8}
+.btn.purple{border-color:rgba(160,120,255,.6);background:linear-gradient(180deg,rgba(160,120,255,.2),rgba(80,40,180,.08))}
+.btn.danger{border-color:rgba(255,90,80,.6);background:linear-gradient(180deg,rgba(255,80,60,.2),rgba(120,20,20,.1));color:#ffd0c8}
+.btnrow{display:flex;flex-direction:column;align-items:center;gap:2px;margin-top:8px}
+.hint{margin-top:12px;font-size:9px;opacity:.4;letter-spacing:1px;line-height:1.6;max-width:320px}
+#panel{position:absolute;inset:0;background:rgba(3,8,16,.94);z-index:20;overflow-y:auto;padding:14px;color:#d8f0ff;display:none}
+#panel.show{display:block}
+#panel h2{font-size:14px;letter-spacing:4px;color:#0fe;text-align:center;margin-bottom:12px;font-weight:800}
+#panel .close{position:absolute;top:10px;right:10px;width:32px;height:32px;border-radius:8px;border:1px solid rgba(90,180,255,.5);background:rgba(20,40,70,.6);color:#cfeaff;font-size:14px;line-height:30px;text-align:center;cursor:pointer}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}
+.card{padding:8px;border-radius:10px;border:1.5px solid rgba(90,180,255,.25);background:rgba(12,28,48,.55);text-align:center;font-size:10px;cursor:pointer}
+.card.sel{border-color:#0fe;background:linear-gradient(180deg,rgba(0,180,255,.25),rgba(0,120,255,.1))}
+.card.buy{border-color:rgba(255,200,80,.4)}
+.card .nm{font-weight:bold;color:#eaf7ff;margin-top:5px;letter-spacing:1px}
+.card .st{font-size:9px;margin-top:4px;padding:2px 6px;border-radius:5px;display:inline-block}
+.card .st.own{background:rgba(0,255,180,.15);color:#7cf7c0}
+.card .st.buy{background:rgba(255,200,80,.15);color:#ffd040}
+.card .st.no{background:rgba(255,90,90,.15);color:#ff8080}
+.prev{width:100%;height:52px;border-radius:6px;position:relative;overflow:hidden;border:1px solid #000;background:#222}
+.prev .stripe{position:absolute;top:50%;left:0;right:0;height:6px;transform:translateY(-50%);box-shadow:0 0 8px currentColor}
+.prev .glow{position:absolute;bottom:4px;right:4px;width:8px;height:8px;border-radius:50%;box-shadow:0 0 8px currentColor}
+.ach{padding:8px 10px;border-radius:8px;border:1px solid rgba(255,200,80,.15);background:rgba(20,14,6,.5);margin-bottom:6px;font-size:10px;display:flex;gap:8px;align-items:center}
+.ach.un{border-color:rgba(255,200,80,.6);background:linear-gradient(180deg,rgba(60,40,10,.7),rgba(30,20,8,.4))}
+.ach .ic{font-size:18px;flex-shrink:0;width:24px;text-align:center}
+.ach .nm{font-weight:bold;color:#eaf7ff;font-size:11px}
+.ach .ds{font-size:9px;opacity:.7;margin-top:2px}
+.ach .rw{font-size:9px;color:#7cf7c0;margin-top:2px}
+.tabs{display:flex;gap:4px;margin-bottom:12px;justify-content:center}
+.tabs .t{padding:7px 12px;border:1px solid rgba(90,180,255,.3);background:rgba(12,28,48,.55);color:#8fb8d8;font-size:10px;font-weight:bold;letter-spacing:1px;cursor:pointer;border-radius:8px 8px 0 0}
+.tabs .t.on{color:#0fe;background:rgba(20,45,75,.9);border-color:rgba(90,180,255,.6)}
+.toast{position:absolute;left:50%;top:60px;transform:translateX(-50%);background:rgba(8,20,34,.95);border:1px solid rgba(0,230,255,.6);color:#eafcff;padding:7px 14px;border-radius:8px;font-size:11px;font-weight:bold;letter-spacing:1px;z-index:50;opacity:0;transition:opacity .25s;pointer-events:none;font-family:monospace}
+.toast.show{opacity:1}
+#winStats{font-size:11px;letter-spacing:2px;opacity:.85;line-height:1.9}
+#winStats b{color:#7cf7c0}
+#winStats .gold{color:#ffd040}
+#winTime{font-size:28px;color:#7cf7c0;letter-spacing:3px;margin-bottom:8px;font-weight:bold}
+
+#bindingPanel{position:absolute;inset:0;background:rgba(3,8,16,.96);z-index:25;overflow-y:auto;padding:14px;color:#d8f0ff;display:none}
+#bindingPanel.show{display:block}
+#bindingPanel h2{font-size:14px;letter-spacing:4px;color:#0fe;text-align:center;margin-bottom:14px}
+.bindrow{display:flex;align-items:center;padding:10px 12px;margin-bottom:8px;border-radius:10px;border:1px solid rgba(90,180,255,.3);background:rgba(12,28,48,.55);font-size:11px}
+.bindrow .name{flex:1;color:#bfe4ff;font-weight:bold;letter-spacing:1px}
+.bindrow .key{padding:6px 12px;border-radius:8px;background:rgba(0,180,255,.2);color:#0fe;font-weight:bold;min-width:70px;text-align:center;margin-right:8px;font-size:11px}
+.bindrow.wait .key{background:rgba(255,200,60,.3);color:#ffd040;animation:blink 1s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+.bindrow .btn2{padding:6px 12px;border-radius:8px;border:1px solid rgba(0,220,255,.5);background:rgba(0,180,255,.15);color:#eafcff;font-size:10px;font-weight:bold;cursor:pointer}
+.bindrow .btn2.set{background:rgba(0,255,200,.2);border-color:rgba(0,255,200,.6);color:#7cf7c0}
+.keylist{margin-top:16px;padding:10px;border-radius:8px;background:rgba(0,10,20,.5);border:1px solid rgba(90,180,255,.2);font-size:9px;color:#8fb8d8;line-height:1.7;font-family:monospace}
+
+#pauseScreen{position:absolute;inset:0;background:rgba(3,8,16,.85);z-index:30;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+#pauseScreen.show{display:flex}
+#pauseScreen h2{font-size:22px;letter-spacing:8px;color:#0fe;margin-bottom:20px;font-weight:800;text-shadow:0 0 12px rgba(0,220,255,.6)}
+#pauseScreen .btn{width:200px;text-align:center;padding:14px;margin:5px}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div id="hud" style="display:none">
+  <div class="hp" id="hp1"><div class="lbl">ВРЕМЯ</div><div class="v" id="vT">0.0</div></div>
+  <div class="hp" id="hp2"><div class="lbl">КМ/Ч</div><div class="v" id="vS">0</div></div>
+  <div class="hp" id="hp3"><div class="lbl" id="vOL">ВОРОТА</div><div class="v" id="vO">0/0</div></div>
+  <div class="hp" id="hp4"><div class="lbl">МОНЕТЫ</div><div class="v" id="vC" style="color:#ffd040">0</div></div>
+  <div class="hp" id="hp5"><div class="lbl">КРАШИ</div><div class="v" id="vX">0</div></div>
+  <div id="altBox"><div class="lbl">ВЫСОТА</div><div class="v" id="vA">0</div></div>
+  <canvas id="mm"></canvas>
+  <div id="cross"></div>
+  <div id="arrow"></div>
+  <div id="fire">ОГОНЬ</div>
+  <div id="ability">&#9889;</div>
+  <div class="pd" id="bU">&#9650;</div>
+  <div class="pd" id="bD">&#9660;</div>
+  <div class="pd" id="bL">&#9664;</div>
+  <div class="pd" id="bR">&#9654;</div>
+  <div class="pd2" id="bUp2">&#9650;</div>
+  <div class="pd2" id="bDn2">&#9660;</div>
+</div>
+
+<div id="overlay">
+  <h1>FPV DRONE</h1>
+  <div class="ver">v3.0 · POCKET EDITION</div>
+  <div class="sub" id="ovSub">ГОРОДСКАЯ ГОНКА</div>
+
+  <div id="menu" style="width:100%;max-width:520px">
+    <div class="row" id="rMission">
+      <button class="opt on" data-m="race">ГОНКА</button>
+      <button class="opt" data-m="destroy">РАЗРУШЕНИЕ</button>
+      <button class="opt" data-m="deliver">ДОСТАВКА</button>
+      <button class="opt" data-m="pvp">PVP</button>
+    </div>
+    <div class="row" id="rDiff">
+      <button class="opt" data-d="0">ЛЕГКО</button>
+      <button class="opt on" data-d="1">НОРМА</button>
+      <button class="opt" data-d="2">СЛОЖНО</button>
+    </div>
+    <div class="row" id="rTheme">
+      <button class="opt on" data-t="0">ДЕНЬ</button>
+      <button class="opt" data-t="1">НЕОН</button>
+      <button class="opt" data-t="2">ЗАКАТ</button>
+      <button class="opt" data-t="3">НОЧЬ</button>
+      <button class="opt" data-t="4">ПЕСОК</button>
+    </div>
+    <div class="row" id="rWeather">
+      <button class="opt on" data-w="0">ЯСНО</button>
+      <button class="opt" data-w="1">ОБЛАЧНО</button>
+      <button class="opt" data-w="2">ДОЖДЬ</button>
+      <button class="opt" data-w="3">СНЕГ</button>
+      <button class="opt" data-w="4">ТУМАН</button>
+      <button class="opt" data-w="5">ГРОЗА</button>
+    </div>
+    <div class="row">
+      <button class="opt" id="mDrone">ДРОН: ...</button>
+      <button class="opt" id="mSkin">СКИН: ...</button>
+    </div>
+    <div class="btnrow">
+      <button class="btn" id="btnStart">СТАРТ</button>
+      <button class="btn small gold" id="btnShop">МАГАЗИН</button>
+      <button class="btn small purple" id="btnProf">ПРОФИЛЬ</button>
+      <button class="btn small" id="btnBind">КНОПКИ</button>
+      <button class="btn small" id="btnHelp">КАК ИГРАТЬ</button>
+    </div>
+    <div class="hint">СТРЕЛКИ — ЛЁТ · Q/E — ВЫСОТА · ПРОБЕЛ — ОГОНЬ · F — СПОСОБНОСТЬ · ESC — ПАУЗА</div>
+  </div>
+
+  <div id="winStats" style="display:none;margin-bottom:14px">
+    <div id="winTime">0.0</div>
+    <div>КРАШЕЙ: <b id="wX">0</b></div>
+    <div>МОНЕТ: <b id="wC" class="gold">0</b></div>
+  </div>
+  <div id="winButtons" style="display:none;margin-top:12px">
+    <button class="btn small" id="winToMenu">В ГЛАВНОЕ МЕНЮ</button>
+  </div>
+</div>
+
+<div id="panel">
+  <div class="close" id="pClose">X</div>
+  <div id="pBody"></div>
+</div>
+
+<div id="bindingPanel">
+  <h2>НАСТРОЙКИ УПРАВЛЕНИЯ</h2>
+  <div id="bindList"></div>
+  <div class="keylist" id="keyDebug">
+    <b>ТЕКУЩАЯ КНОПКА:</b> <span id="debugKey">—</span><br>
+    <b>ПОСЛЕДНИЕ 5:</b> <span id="debugHist">—</span>
+  </div>
+  <div style="text-align:center;margin-top:14px">
+    <button class="btn small" id="resetBinds">СБРОСИТЬ</button>
+    <button class="btn" id="bindClose">ГОТОВО</button>
+  </div>
+</div>
+
+<div id="pauseScreen">
+  <h2>ПАУЗА</h2>
+  <button class="btn" id="pResume">ПРОДОЛЖИТЬ</button>
+  <button class="btn small" id="pRestart">ЗАНОВО</button>
+  <button class="btn small danger" id="pMenu">В ГЛАВНОЕ МЕНЮ</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+'use strict';
+
+var nowFn = Date.now || function(){ return (new Date()).getTime(); };
+function clamp(v,a,b){ return v<a?a:(v>b?b:v); }
+function rand(a,b){ return a + Math.random()*(b-a); }
+function $(id){ return document.getElementById(id); }
+function toast(s){ var t=$('toast'); t.textContent=s; t.classList.add('show'); clearTimeout(t._t); t._t=setTimeout(function(){t.classList.remove('show');},1400); }
+
+/* ═══════════════════════ ТЕМЫ ═══════════════════════ */
+var THEMES = [
+  { name:'ДЕНЬ', sky:[130,190,230], ground:[42,58,48], fog:[160,190,210],
+    wallA:[150,160,170], wallB:[100,115,135], win:[230,250,255],
+    gate:[255,60,140], coin:[255,210,60] },
+  { name:'НЕОН', sky:[10,20,42], ground:[14,20,32], fog:[20,40,80],
+    wallA:[40,60,95], wallB:[25,35,60], win:[80,200,255],
+    gate:[0,230,255], coin:[255,220,80] },
+  { name:'ЗАКАТ', sky:[200,110,80], ground:[50,30,40], fog:[180,100,90],
+    wallA:[90,60,80], wallB:[60,40,55], win:[255,200,140],
+    gate:[255,140,60], coin:[255,230,120] },
+  { name:'НОЧЬ', sky:[5,10,25], ground:[8,12,20], fog:[15,25,50],
+    wallA:[30,40,65], wallB:[18,25,45], win:[140,255,180],
+    gate:[130,255,60], coin:[255,220,80] },
+  { name:'ПЕСОК', sky:[180,150,110], ground:[110,80,55], fog:[200,170,130],
+    wallA:[140,105,75], wallB:[100,75,55], win:[220,255,220],
+    gate:[0,220,200], coin:[255,210,80] }
+];
+
+var WEATHERS = [
+  { name:'ЯСНО', fogMul:1.00, dark:1.00, wind:0.0 },
+  { name:'ОБЛАЧНО', fogMul:1.45, dark:0.82, wind:0.6 },
+  { name:'ДОЖДЬ', fogMul:1.80, dark:0.68, wind:1.4 },
+  { name:'СНЕГ', fogMul:2.20, dark:0.90, wind:0.9 },
+  { name:'ТУМАН', fogMul:3.40, dark:0.90, wind:0.2 },
+  { name:'ГРОЗА', fogMul:2.10, dark:0.50, wind:3.0 }
+];
+
+var DRONES = [
+  { id:'standard', name:'КВАДРО', price:0, spd:4.5, turn:2.2, hp:100 },
+  { id:'heavy', name:'ТЯЖЁЛЫЙ', price:400, spd:3.2, turn:1.5, hp:200 },
+  { id:'sport', name:'СПОРТ', price:800, spd:6.0, turn:2.8, hp:80 },
+  { id:'racer', name:'ГОНЩИК', price:1500, spd:7.5, turn:3.5, hp:60 },
+  { id:'mini', name:'РАЗВЕДЧИК', price:600, spd:4.0, turn:3.0, hp:50 },
+  { id:'glider', name:'ПЛАНЕР', price:2000, spd:6.5, turn:2.0, hp:90 },
+  { id:'delta', name:'ДЕЛЬТА', price:2500, spd:7.0, turn:2.4, hp:85 },
+  { id:'jet', name:'РЕАКТИВ', price:3500, spd:8.0, turn:2.6, hp:100 }
+];
+
+var SKINS = [
+  { id:'default', name:'СТАНДАРТ', price:0, body:[32,32,40], accent:[0,229,255] },
+  { id:'fire', name:'ОГОНЬ', price:150, body:[70,20,15], accent:[255,90,30] },
+  { id:'matrix', name:'МАТРИЦА', price:250, body:[15,40,15], accent:[80,255,80] },
+  { id:'ice', name:'ЛЁД', price:300, body:[20,50,80], accent:[130,220,255] },
+  { id:'pink', name:'РОЗА', price:350, body:[80,20,60], accent:[255,80,170] },
+  { id:'gold', name:'ЗОЛОТО', price:500, body:[80,60,15], accent:[255,210,60] },
+  { id:'camo', name:'КАМО', price:650, body:[60,70,45], accent:[150,180,120] },
+  { id:'rainbow', name:'РАДИАНТ', price:1200, body:[40,40,60], accent:[255,0,255] },
+  { id:'chrome', name:'ХРОМ', price:700, body:[160,170,180], accent:[255,255,255] },
+  { id:'aurora', name:'АВРОРА', price:850, body:[30,60,45], accent:[80,255,140] },
+  { id:'oil', name:'НЕФТЬ', price:1000, body:[25,25,35], accent:[255,0,255] },
+  { id:'pearl', name:'ЖЕМЧУГ', price:1100, body:[220,215,225], accent:[255,220,255] },
+  { id:'plasma', name:'ПЛАЗМА', price:1300, body:[70,15,55], accent:[255,40,180] },
+  { id:'holo', name:'ГОЛО', price:1600, body:[30,40,70], accent:[0,255,255] },
+  { id:'nebula', name:'ТУМАН', price:1900, body:[45,20,70], accent:[150,70,255] },
+  { id:'lava', name:'ЛАВА', price:2200, body:[70,25,15], accent:[255,90,30] }
+];
+
+var ABILITIES = {
+  standard: { name:'РЫВОК', cd:10, dur:1.0, color:[0,229,255] },
+  heavy:    { name:'ЯДЕРКА', cd:30, dur:0.5, color:[255,80,40] },
+  sport:    { name:'ТУРБО', cd:12, dur:2.0, color:[255,40,40] },
+  racer:    { name:'ПРЫЖОК', cd:8,  dur:0.2, color:[255,0,255] },
+  mini:     { name:'НЕВИД', cd:14, dur:3.0, color:[80,255,140] },
+  glider:   { name:'ПОТОК', cd:16, dur:2.5, color:[160,220,255] },
+  delta:    { name:'УДАР', cd:14, dur:0.8, color:[255,50,100] },
+  jet:      { name:'ФОРСАЖ', cd:18, dur:2.5, color:[255,140,80] }
+};
+
+var RANKS = [
+  { name:'НОВОБРАНЕЦ', xp:0 }, { name:'ПИЛОТ', xp:500 },
+  { name:'ЛЕЙТЕНАНТ', xp:2000 }, { name:'КАПИТАН', xp:6000 },
+  { name:'МАЙОР', xp:15000 }, { name:'ПОЛКОВНИК', xp:35000 },
+  { name:'ГЕНЕРАЛ', xp:80000 }, { name:'ЛЕГЕНДА', xp:200000 }
+];
+
+var ACH = [
+  {id:'fly1', name:'Первая минута', desc:'60 сек в игре', rw:50, xp:20, chk:function(s){return s.playTime>=60;}},
+  {id:'fly10', name:'Лётчик', desc:'10 минут', rw:200, xp:100, chk:function(s){return s.playTime>=600;}},
+  {id:'fly60', name:'Час в небе', desc:'60 минут', rw:800, xp:400, chk:function(s){return s.playTime>=3600;}},
+  {id:'k10', name:'Десятник', desc:'10 убийств', rw:100, xp:50, chk:function(s){return s.kills>=10;}},
+  {id:'k50', name:'Пятидесятник', desc:'50 убийств', rw:400, xp:200, chk:function(s){return s.kills>=50;}},
+  {id:'k100', name:'Снайпер', desc:'100 убийств', rw:800, xp:400, chk:function(s){return s.kills>=100;}},
+  {id:'c1', name:'Первый краш', desc:'Разбиться', rw:20, xp:10, chk:function(s){return s.crashes>=1;}},
+  {id:'c100', name:'Штормовой', desc:'100 крашей', rw:500, xp:250, chk:function(s){return s.crashes>=100;}},
+  {id:'g10', name:'10 ворот', desc:'Пройти 10 ворот', rw:50, xp:30, chk:function(s){return s.gates>=10;}},
+  {id:'g100', name:'100 ворот', desc:'Пройти 100 ворот', rw:400, xp:200, chk:function(s){return s.gates>=100;}},
+  {id:'r1', name:'Финиш', desc:'Пройти трассу', rw:150, xp:80, chk:function(s){return s.racesWon>=1;}},
+  {id:'r10', name:'Постоянный', desc:'10 трасс', rw:600, xp:300, chk:function(s){return s.racesWon>=10;}},
+  {id:'d1', name:'Первый снос', desc:'Разрушить здание', rw:30, xp:15, chk:function(s){return s.bld>=1;}},
+  {id:'d50', name:'Разрушитель', desc:'50 зданий', rw:600, xp:300, chk:function(s){return s.bld>=50;}},
+  {id:'dv1', name:'Курьер', desc:'Выполнить доставку', rw:200, xp:100, chk:function(s){return s.deliv>=1;}},
+  {id:'dv5', name:'Почтальон', desc:'5 доставок', rw:800, xp:400, chk:function(s){return s.deliv>=5;}},
+  {id:'p1', name:'Первая победа', desc:'Выиграть PvP', rw:200, xp:100, chk:function(s){return s.pvpWins>=1;}},
+  {id:'p5', name:'Гладиатор', desc:'5 PvP побед', rw:800, xp:400, chk:function(s){return s.pvpWins>=5;}},
+  {id:'cn1k', name:'Тысячник', desc:'Заработать 1000', rw:100, xp:50, chk:function(s){return s.coinsEarned>=1000;}},
+  {id:'cn10k', name:'Десятка', desc:'Заработать 10000', rw:500, xp:250, chk:function(s){return s.coinsEarned>=10000;}},
+  {id:'s1', name:'Первый скин', desc:'Купить скин', rw:50, xp:30, chk:function(s){return s.skins>=1;}},
+  {id:'s5', name:'Коллекционер', desc:'5 скинов', rw:400, xp:200, chk:function(s){return s.skins>=5;}},
+  {id:'m1', name:'Мастер', desc:'МАСТЕР на дроне', rw:1000, xp:500, chk:function(s){ return hasMaxMastery(); }},
+  {id:'w5', name:'Метеоролог', desc:'Все 6 погод', rw:400, xp:200, chk:function(s){ for(var i=0;i<6;i++) if(!s.weathers[i]) return false; return true; }},
+  {id:'st', name:'Громовержец', desc:'Погода гроза', rw:150, xp:80, chk:function(s){ return !!s.weathers[5]; }}
+];
+
+/* ═══════════════════════ СОХРАНЕНИЕ ═══════════════════════ */
+var P = {
+  coins:0, xp:0,
+  unlockedSkins:['default'], skin:'default',
+  unlockedDrones:['standard'], drone:'standard',
+  mastery:{}, ach:{},
+  stats:{ playTime:0, kills:0, deaths:0, crashes:0, gates:0, bld:0,
+          races:0, deliv:0, destroyWins:0, pvpWins:0, pvpLosses:0,
+          coinsEarned:0, skins:0, drones:0, weathers:{},
+          racesWon:0, raceHard:false, raceClean:false }
+};
+function hasMaxMastery(){ for(var i=0;i<DRONES.length;i++) if((P.mastery[DRONES[i].id]||0) >= 2800) return true; return false; }
+
+var SAVE_KEY = 'fpv_drone_v3';
+function save(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify(P)); }catch(e){} }
+function load(){
+  try{
+    var s = localStorage.getItem(SAVE_KEY);
+    if(!s) return;
+    var d = JSON.parse(s);
+    for(var k in d) if(d.hasOwnProperty(k)) P[k] = d[k];
+    if(!P.stats) P.stats = {};
+    var defaults = { playTime:0, kills:0, deaths:0, crashes:0, gates:0, bld:0,
+                     races:0, deliv:0, destroyWins:0, pvpWins:0, pvpLosses:0,
+                     coinsEarned:0, skins:0, drones:0, weathers:{},
+                     racesWon:0, raceHard:false, raceClean:false };
+    for(var k2 in defaults) if(typeof P.stats[k2] === 'undefined') P.stats[k2] = defaults[k2];
+    if(P.unlockedSkins.indexOf('default') < 0) P.unlockedSkins.push('default');
+    if(P.unlockedDrones.indexOf('standard') < 0) P.unlockedDrones.push('standard');
+    if(!P.mastery) P.mastery = {};
+    if(!P.ach) P.ach = {};
+  }catch(e){}
+}
+function checkAch(){
+  var unlocked = 0;
+  for(var i=0;i<ACH.length;i++){
+    var a = ACH[i];
+    if(P.ach[a.id]) continue;
+    var ok = false;
+    try{ ok = a.chk(P.stats); }catch(e){ ok = false; }
+    if(ok){
+      P.ach[a.id] = 1;
+      P.coins += a.rw; P.stats.coinsEarned += a.rw; P.xp += a.xp;
+      unlocked++;
+      toast('🏆 ' + a.name + ' +' + a.rw + '💰');
+    }
+  }
+  if(unlocked > 0) save();
+}
+function getRank(){ for(var i=RANKS.length-1;i>=0;i--) if(P.xp >= RANKS[i].xp) return i; return 0; }
+function addXP(n){ P.xp += n; }
+
+/* ═══════════════════════ ПРИВЯЗКИ ═══════════════════════ */
+var BIND_DEFAULTS = {
+  fwd: 38, back: 40, left: 37, right: 39,
+  up: 81, down: 69,
+  fire: 32, ability: 70, pause: 27, menu: 13
+};
+var BIND_LABELS = {
+  fwd:'ВПЕРЁД', back:'НАЗАД', left:'ПОВОРОТ ЛЕВО', right:'ПОВОРОТ ПРАВО',
+  up:'ПОДЪЁМ', down:'СПУСК',
+  fire:'СТРЕЛЬБА', ability:'СПОСОБНОСТЬ', pause:'ПАУЗА', menu:'МЕНЮ'
+};
+var BINDS = {};
+(function(){
+  for(var k in BIND_DEFAULTS) BINDS[k] = BIND_DEFAULTS[k];
+  try{
+    var s = localStorage.getItem('fpv_binds');
+    if(s){
+      var d = JSON.parse(s);
+      for(var kk in d) if(typeof d[kk] === 'number') BINDS[kk] = d[kk];
+    }
+  }catch(e){}
+})();
+function saveBinds(){ try{ localStorage.setItem('fpv_binds', JSON.stringify(BINDS)); }catch(e){} }
+function keyName(code){
+  if(code === 13) return 'ENTER';
+  if(code === 27) return 'ESC';
+  if(code === 32) return 'SPACE';
+  if(code === 37) return '←';
+  if(code === 38) return '↑';
+  if(code === 39) return '→';
+  if(code === 40) return '↓';
+  if(code >= 48 && code <= 57) return String.fromCharCode(code);
+  if(code >= 65 && code <= 90) return String.fromCharCode(code);
+  if(code >= 112 && code <= 123) return 'F' + (code - 111);
+  return 'K' + code;
+}
+function actionFor(key){
+  for(var a in BINDS) if(BINDS[a] === key) return a;
+  return null;
+}
+
+/* ═══════════════════════ КАНВАС ═══════════════════════ */
+var canvas = $('c');
+var ctx = canvas.getContext('2d');
+var W, H, buf, data, zbuf, skylineH, horizon;
+
+function setupSize(){
+  var iw = window.innerWidth, ih = window.innerHeight;
+  var aspect = iw / ih;
+  if(aspect > 2.2) aspect = 2.2;
+  if(aspect < 0.5) aspect = 0.5;
+  if(aspect >= 1){ W = 160; H = Math.round(W / aspect); }
+  else { H = 160; W = Math.round(H * aspect); }
+  if(H < 80) H = 80;
+  if(W < 80) W = 80;
+  if(W > 240){ W = 240; H = Math.round(W / aspect); }
+  if(H > 240){ H = 240; W = Math.round(H * aspect); }
+  canvas.width = W; canvas.height = H;
+  buf = ctx.createImageData(W, H);
+  data = buf.data;
+  for(var j=3;j<data.length;j+=4) data[j] = 255;
+  zbuf = new Array(W);
+  skylineH = new Array(W);
+  for(var k=0;k<W;k++) skylineH[k] = 10 + Math.sin(k*0.15)*5 + Math.sin(k*0.37)*3;
+  horizon = Math.round(H * 0.5);
+}
+setupSize();
+
+/* ═══════════════════════ КАРТА ═══════════════════════ */
+var MAPW = 32, MAPH = 32;
+var map = [];
+var buildings = [];
+function buildMap(){
+  map = new Array(MAPW * MAPH);
+  for(var y=0;y<MAPH;y++){
+    for(var x=0;x<MAPW;x++){
+      if((x & 3) === 0 || (y & 3) === 0) map[y*MAPW + x] = 0;
+      else {
+        var h = ((x*7)+(y*13)) & 3;
+        map[y*MAPW + x] = (h === 0 || h === 2) ? 1 : 2;
+      }
+    }
+  }
+  buildings = [];
+  for(var yy=1;yy<MAPH-1;yy++)
+    for(var xx=1;xx<MAPW-1;xx++)
+      if(map[yy*MAPW+xx] > 0) buildings.push({x:xx, y:yy, alive:true});
+}
+
+/* ═══════════════════════ ИГРОК ═══════════════════════ */
+var px, py, pa, dirX, dirY, planeX, planeY;
+var FOV = 0.66;
+function updateDir(){
+  dirX = Math.cos(pa); dirY = Math.sin(pa);
+  planeX = -dirY * FOV; planeY = dirX * FOV;
+}
+
+var gates = [], coins = [], cargo = null, bots = [];
+var bullets = [], explosions = [];
+
+/* ═══════════════════════ СОСТОЯНИЕ ═══════════════════════ */
+var G = {
+  running:false, paused:false,
+  mode:'race', diff:1, theme:0, weather:0,
+  time:0, crashes:0, coinsGot:0,
+  gatesTotal:0, gatesDone:0,
+  kills:0, deaths:0, hp:100, maxHp:100,
+  missionTargets:0, missionDone:0,
+  carryCargo:false,
+  keys:{}, actions:{},
+  speed:0,
+  abilityType:null, abilityTimer:0, abilityCD:0,
+  invuln:0, lastFire:0,
+  frames:0,
+  captureMode:null,
+  keyHistory:[]
+};
+var pz = 0;
+var PITCH_K = 15;
+
+var DIFFS = [
+  { name:'ЛЕГКО', gates:8, coin:1, botSpeed:0.7, botDmg:15 },
+  { name:'НОРМА', gates:12, coin:2, botSpeed:1.0, botDmg:20 },
+  { name:'СЛОЖНО', gates:16, coin:3, botSpeed:1.4, botDmg:30 }
+];
+
+function getDrone(){ for(var i=0;i<DRONES.length;i++) if(DRONES[i].id===P.drone) return DRONES[i]; return DRONES[0]; }
+function getSkin(){ for(var i=0;i<SKINS.length;i++) if(SKINS[i].id===P.skin) return SKINS[i]; return SKINS[0]; }
+function getMastery(id){ return P.mastery[id] || 0; }
+function getMasteryLevel(id){
+  var xp = getMastery(id);
+  if(xp >= 2800) return 4;
+  if(xp >= 1400) return 3;
+  if(xp >= 600) return 2;
+  if(xp >= 200) return 1;
+  return 0;
+}
+function getMasteryMul(id){ return [1.0, 1.05, 1.10, 1.18, 1.30][getMasteryLevel(id)]; }
+function hasAbility(id){ return getMasteryLevel(id) >= 2; }
+
+/* ═══════════════════════ РЕНДЕР ═══════════════════════ */
+function render(){
+  var th = THEMES[G.theme];
+  var w = WEATHERS[G.weather];
+  var dm = w.dark;
+
+  var skyR = (th.sky[0]*dm)|0, skyG = (th.sky[1]*dm)|0, skyB = (th.sky[2]*dm)|0;
+  var grR = (th.ground[0]*dm)|0, grG = (th.ground[1]*dm)|0, grB = (th.ground[2]*dm)|0;
+  var fogR = (th.fog[0]*dm)|0, fogG = (th.fog[1]*dm)|0, fogB = (th.fog[2]*dm)|0;
+  var fogFar = 14 / w.fogMul;
+  var fogNear = 3 / w.fogMul;
+
+  var i, x, y, idx;
+
+  for(y=0;y<H;y++){
+    var yOff = y * W * 4;
+    var isFloor = y > horizon;
+    for(x=0;x<W;x++){
+      idx = yOff + x * 4;
+      if(isFloor){
+        var d = (y - horizon) / (H - horizon);
+        data[idx]   = grR + d * 30;
+        data[idx+1] = grG + d * 30;
+        data[idx+2] = grB + d * 30;
+      } else {
+        var skyY = horizon - y;
+        if(skyY < skylineH[x]){
+          data[idx] = 18; data[idx+1] = 18; data[idx+2] = 28;
+        } else {
+          data[idx] = skyR; data[idx+1] = skyG; data[idx+2] = skyB;
+        }
+      }
+    }
+  }
+
+  for(x=0;x<W;x++){
+    var camX = 2 * x / W - 1;
+    var rdx = dirX + planeX * camX;
+    var rdy = dirY + planeY * camX;
+    var mapX = Math.floor(px), mapY = Math.floor(py);
+    var ddx = (rdx === 0) ? 1e30 : Math.abs(1 / rdx);
+    var ddy = (rdy === 0) ? 1e30 : Math.abs(1 / rdy);
+    var stepX, stepY, sdx, sdy;
+    if(rdx < 0){ stepX = -1; sdx = (px - mapX) * ddx; } else { stepX = 1; sdx = (mapX + 1 - px) * ddx; }
+    if(rdy < 0){ stepY = -1; sdy = (py - mapY) * ddy; } else { stepY = 1; sdy = (mapY + 1 - py) * ddy; }
+    var side = 0, cell = 0, steps = 64;
+    while(steps-- > 0){
+      if(sdx < sdy){ sdx += ddx; mapX += stepX; side = 0; }
+      else { sdy += ddy; mapY += stepY; side = 1; }
+      mapX = ((mapX % MAPW) + MAPW) % MAPW;
+      mapY = ((mapY % MAPH) + MAPH) % MAPH;
+      cell = map[mapY * MAPW + mapX];
+      if(cell > 0) break;
+    }
+    if(cell === 0){ zbuf[x] = 1e30; continue; }
+    var perp = (side === 0) ? (sdx - ddx) : (sdy - ddy);
+    if(perp < 0.05) perp = 0.05;
+    zbuf[x] = perp;
+    var lineH = Math.floor(H / perp);
+    var wTop = Math.floor(horizon - lineH * 0.5);
+    var wBot = wTop + lineH;
+    if(wTop < 0) wTop = 0;
+    if(wBot > H) wBot = H;
+    var wallCol = (cell === 1) ? th.wallA : th.wallB;
+    var shade = 1 / (1 + perp * 0.18);
+    if(side === 1) shade *= 0.72;
+    var f = (perp - fogNear) / (fogFar - fogNear);
+    if(f < 0) f = 0; if(f > 0.85) f = 0.85;
+    var cr = wallCol[0], cg = wallCol[1], cb = wallCol[2];
+    cr = (cr * shade * (1-f) + fogR * f) | 0;
+    cg = (cg * shade * (1-f) + fogG * f) | 0;
+    cb = (cb * shade * (1-f) + fogB * f) | 0;
+    var wallX;
+    if(side === 0) wallX = py + perp * rdy; else wallX = px + perp * rdx;
+    wallX = wallX - Math.floor(wallX);
+    var isWin = (wallX > 0.25 && wallX < 0.42) || (wallX > 0.58 && wallX < 0.75);
+    var winR = th.win[0], winG = th.win[1], winB = th.win[2];
+    for(y = wTop; y < wBot; y++){
+      var yN = (y - wTop) / lineH;
+      var band = (((yN * 6) | 0) & 1) === 0;
+      var r2 = cr, g2 = cg, b2 = cb;
+      if(isWin && band){
+        r2 = (cr + winR * 0.5) | 0; if(r2 > 255) r2 = 255;
+        g2 = (cg + winG * 0.5) | 0; if(g2 > 255) g2 = 255;
+        b2 = (cb + winB * 0.5) | 0; if(b2 > 255) b2 = 255;
+      }
+      var idx2 = (y * W + x) * 4;
+      data[idx2] = r2; data[idx2+1] = g2; data[idx2+2] = b2;
+    }
+  }
+
+  var sprites = [];
+  for(i=0;i<gates.length;i++){ if(!gates[i].passed) sprites.push({x:gates[i].x, y:gates[i].y, type:'gate', color:th.gate}); }
+  for(i=0;i<coins.length;i++){ if(!coins[i].got) sprites.push({x:coins[i].x, y:coins[i].y, type:'coin', color:th.coin}); }
+  if(cargo && !cargo.done) sprites.push({x:cargo.x, y:cargo.y, type:'cargo', color:[255,200,60]});
+  for(i=0;i<bots.length;i++){ if(bots[i].alive) sprites.push({x:bots[i].x, y:bots[i].y, type:'bot', color:[255,60,60]}); }
+  for(i=0;i<bullets.length;i++) sprites.push({x:bullets[i].x, y:bullets[i].y, type:'bullet', color:[255,240,100]});
+
+  sprites.sort(function(a,b){
+    var da = (a.x-px)*(a.x-px)+(a.y-py)*(a.y-py);
+    var db = (b.x-px)*(b.x-px)+(b.y-py)*(b.y-py);
+    return db - da;
+  });
+
+  var invDet = 1.0 / (planeX * dirY - dirX * planeY);
+
+  for(i=0;i<sprites.length;i++){
+    var s = sprites[i];
+    var ssx = s.x - px, ssy = s.y - py;
+    var trX = invDet * (dirY * ssx - dirX * ssy);
+    var trY = invDet * (-planeY * ssx + planeX * ssy);
+    if(trY < 0.2) continue;
+    var scrX = Math.floor((W * 0.5) * (1 + trX / trY));
+    var sprH = Math.abs(Math.floor(H / trY));
+    if(sprH < 3) continue;
+    var sprW = sprH;
+    var dsy = Math.floor(horizon - sprH * 0.5);
+    var dsx = scrX - Math.floor(sprW * 0.5);
+    var xs = dsx; if(xs < 0) xs = 0;
+    var xe = dsx + sprW; if(xe > W) xe = W;
+    var ys = dsy; if(ys < 0) ys = 0;
+    var ye = dsy + sprH; if(ye > H) ye = H;
+    var cCenterY = dsy + sprH * 0.5;
+    var halfW = sprW * 0.5, halfH = sprH * 0.5;
+    for(x = xs; x < xe; x++){
+      if(trY >= zbuf[x]) continue;
+      var cxn = (x - scrX) / halfW;
+      var cxn2 = cxn * cxn;
+      for(y = ys; y < ye; y++){
+        var cyn = (y - cCenterY) / halfH;
+        var r2 = cxn2 + cyn * cyn;
+        var inside = false;
+        if(s.type === 'gate'){ if(r2 <= 1.0 && r2 >= 0.55) inside = true; }
+        else if(s.type === 'coin' || s.type === 'cargo'){ if(r2 <= 0.8) inside = true; }
+        else if(s.type === 'bot'){ if(r2 <= 0.7) inside = true; }
+        else if(s.type === 'bullet'){ if(r2 <= 0.25) inside = true; }
+        if(!inside) continue;
+        var idx3 = (y * W + x) * 4;
+        if(s.type === 'bot'){ data[idx3] = 255; data[idx3+1] = 60; data[idx3+2] = 60; }
+        else if(s.type === 'bullet'){ data[idx3] = 255; data[idx3+1] = 240; data[idx3+2] = 100; }
+        else { data[idx3] = s.color[0]; data[idx3+1] = s.color[1]; data[idx3+2] = s.color[2]; }
+      }
+    }
+
+    var dxs = s.x - px, dys = s.y - py;
+    var d2 = dxs * dxs + dys * dys;
+
+    if(s.type === 'gate' && d2 < 0.55 && G.mode === 'race'){
+      for(var gi=0; gi<gates.length; gi++){
+        if(gates[gi].x === s.x && gates[gi].y === s.y && !gates[gi].passed){
+          gates[gi].passed = true;
+          G.gatesDone++;
+          P.stats.gates++;
+          addXP(15);
+          P.coins += 10 * DIFFS[G.diff].coin;
+          P.stats.coinsEarned += 10 * DIFFS[G.diff].coin;
+          save(); checkAch(); updateHUD();
+          if(G.gatesDone >= G.gatesTotal) win();
+          break;
+        }
+      }
+    }
+    if(s.type === 'coin' && d2 < 0.25){
+      for(var ci=0; ci<coins.length; ci++){
+        if(coins[ci].x === s.x && coins[ci].y === s.y && !coins[ci].got){
+          coins[ci].got = true;
+          G.coinsGot++;
+          P.coins += 5 * DIFFS[G.diff].coin;
+          P.stats.coinsEarned += 5 * DIFFS[G.diff].coin;
+          save(); updateHUD();
+          break;
+        }
+      }
+    }
+    if(s.type === 'cargo' && d2 < 0.4 && G.mode === 'deliver' && !G.carryCargo){
+      G.carryCargo = true;
+      cargo.done = true;
+      toast('Груз взят');
+      spawnDropoff();
+      updateHUD();
+    }
+  }
+
+  ctx.putImageData(buf, 0, 0);
+}
+
+/* ═══════════════════════ МИНИКАРТА ═══════════════════════ */
+var mmCanvas = $('mm');
+var mmCtx = mmCanvas.getContext('2d');
+function drawMinimap(){
+  var s = 70;
+  if(mmCanvas.width !== s){ mmCanvas.width = s; mmCanvas.height = s; }
+  var c2 = mmCtx;
+  c2.clearRect(0,0,s,s);
+  c2.fillStyle = 'rgba(5,15,30,0.55)';
+  c2.beginPath(); c2.arc(s/2, s/2, s/2-1, 0, Math.PI*2); c2.fill();
+  c2.strokeStyle = 'rgba(90,180,255,0.5)';
+  c2.lineWidth = 1; c2.stroke();
+
+  var scale = (s/2 - 3) / 12;
+  var cx = s/2, cy = s/2;
+  function toMap(wx, wy){
+    var dx = wx - px, dy = wy - py;
+    if(dx > 16) dx -= 32; if(dx < -16) dx += 32;
+    if(dy > 16) dy -= 32; if(dy < -16) dy += 32;
+    return [cx + dx*scale, cy + dy*scale];
+  }
+
+  c2.fillStyle = 'rgba(120,150,180,0.5)';
+  for(var iy = Math.floor(py)-12; iy <= Math.floor(py)+12; iy++){
+    for(var ix = Math.floor(px)-12; ix <= Math.floor(px)+12; ix++){
+      var mx2 = ((ix % MAPW) + MAPW) % MAPW;
+      var my2 = ((iy % MAPH) + MAPH) % MAPH;
+      if(map[my2 * MAPW + mx2] > 0){
+        var p2 = toMap(ix + 0.5, iy + 0.5);
+        c2.fillRect(p2[0]-2, p2[1]-2, 4, 4);
+      }
+    }
+  }
+  var i;
+  for(i=0;i<gates.length;i++){
+    if(gates[i].passed) continue;
+    var gp = toMap(gates[i].x, gates[i].y);
+    c2.fillStyle = '#0fe';
+    c2.beginPath(); c2.arc(gp[0], gp[1], 2.5, 0, Math.PI*2); c2.fill();
+  }
+  for(i=0;i<coins.length;i++){
+    if(coins[i].got) continue;
+    var cp = toMap(coins[i].x, coins[i].y);
+    c2.fillStyle = '#ffd040';
+    c2.beginPath(); c2.arc(cp[0], cp[1], 1.5, 0, Math.PI*2); c2.fill();
+  }
+  if(cargo && !cargo.done){
+    var cg = toMap(cargo.x, cargo.y);
+    c2.fillStyle = '#ffd040';
+    c2.fillRect(cg[0]-3, cg[1]-3, 6, 6);
+  }
+  for(i=0;i<bots.length;i++){
+    if(!bots[i].alive) continue;
+    var bp = toMap(bots[i].x, bots[i].y);
+    c2.fillStyle = '#ff4040';
+    c2.beginPath(); c2.arc(bp[0], bp[1], 2.5, 0, Math.PI*2); c2.fill();
+  }
+  c2.save();
+  c2.translate(cx, cy);
+  c2.rotate(pa + Math.PI/2);
+  c2.fillStyle = '#eaf7ff';
+  c2.beginPath();
+  c2.moveTo(0, -6); c2.lineTo(4, 5); c2.lineTo(0, 3); c2.lineTo(-4, 5);
+  c2.closePath(); c2.fill();
+  c2.strokeStyle = '#0fe'; c2.lineWidth = 1; c2.stroke();
+  c2.restore();
+}
+
+/* ═══════════════════════ СТРЕЛКА ═══════════════════════ */
+function updateArrow(){
+  var arrow = $('arrow');
+  var target = null;
+  if(G.mode === 'race'){
+    for(var i=0;i<gates.length;i++) if(!gates[i].passed){ target = gates[i]; break; }
+  } else if(G.mode === 'pvp'){
+    var bd = 1e9;
+    for(var bi=0;bi<bots.length;bi++){
+      if(!bots[bi].alive) continue;
+      var dd = (bots[bi].x-px)*(bots[bi].x-px)+(bots[bi].y-py)*(bots[bi].y-py);
+      if(dd < bd){ bd = dd; target = bots[bi]; }
+    }
+  } else if(G.mode === 'destroy'){
+    var bd2 = 1e9;
+    for(var bj=0;bj<buildings.length;bj++){
+      if(!buildings[bj].alive) continue;
+      var dx2 = buildings[bj].x - px, dy2 = buildings[bj].y - py;
+      if(dx2 > 16) dx2 -= 32; if(dx2 < -16) dx2 += 32;
+      if(dy2 > 16) dy2 -= 32; if(dy2 < -16) dy2 += 32;
+      var dd2 = dx2*dx2 + dy2*dy2;
+      if(dd2 < bd2){ bd2 = dd2; target = buildings[bj]; }
+    }
+  } else if(G.mode === 'deliver' && cargo){
+    target = cargo;
+  }
+  if(!target){ arrow.style.opacity = '0'; return; }
+  var dx = target.x - px, dy = target.y - py;
+  if(dx > 16) dx -= 32; if(dx < -16) dx += 32;
+  if(dy > 16) dy -= 32; if(dy < -16) dy += 32;
+  var fwd = dx * dirX + dy * dirY;
+  var right = dx * planeX / FOV + dy * planeY / FOV;
+  if(fwd > 3 && Math.abs(right) < 0.3){ arrow.style.opacity = '0'; return; }
+  var sx = 50 + (right / Math.max(1, Math.abs(fwd))) * 40;
+  var sy = 50 - clamp(fwd / 4, -3, 3) * 12;
+  sx = clamp(sx, 12, 88); sy = clamp(sy, 12, 88);
+  arrow.style.left = sx + '%'; arrow.style.top = sy + '%';
+  var ang = Math.atan2(dy, dx) - pa;
+  arrow.style.transform = 'rotate(' + ang + 'rad)';
+  arrow.style.opacity = '0.9';
+}
+
+function updateHUD(){
+  $('vT').textContent = G.time.toFixed(1);
+  $('vS').textContent = Math.round(G.speed * 20);
+  $('vC').textContent = String(P.coins);
+  $('vX').textContent = String(G.crashes);
+  if(G.mode === 'race'){ $('vOL').textContent = 'ВОРОТА'; $('vO').textContent = G.gatesDone + '/' + G.gatesTotal; }
+  else if(G.mode === 'destroy'){ $('vOL').textContent = 'ЦЕЛИ'; $('vO').textContent = G.missionDone + '/' + G.missionTargets; }
+  else if(G.mode === 'deliver'){ $('vOL').textContent = 'ГРУЗ'; $('vO').textContent = G.carryCargo ? 'ДОСТАВИТЬ' : 'ЗАБРАТЬ'; }
+  else if(G.mode === 'pvp'){ $('vOL').textContent = 'HP'; $('vO').textContent = G.hp + '/' + G.maxHp; }
+}
+
+/* ═══════════════════════ МИР ═══════════════════════ */
+function setupWorld(){
+  buildMap();
+  gates = [];
+  var cx = 16, cy = 16, ang = 0;
+  var d = DIFFS[G.diff];
+  for(var i=0;i<d.gates;i++){
+    ang += rand(-0.9, 0.9);
+    var dist = rand(4, 8);
+    var gx = cx + Math.cos(ang) * dist;
+    var gy = cy + Math.sin(ang) * dist;
+    gx = ((gx % MAPW) + MAPW) % MAPW;
+    gy = ((gy % MAPH) + MAPH) % MAPH;
+    var mx = Math.floor(gx), my = Math.floor(gy);
+    if(map[my * MAPW + mx] > 0){
+      for(var tr=0;tr<8;tr++){
+        var tx = Math.floor(gx + (Math.random()-0.5)*2);
+        var ty = Math.floor(gy + (Math.random()-0.5)*2);
+        tx = ((tx % MAPW) + MAPW) % MAPW;
+        ty = ((ty % MAPH) + MAPH) % MAPH;
+        if(map[ty * MAPW + tx] === 0){ gx = tx + 0.5; gy = ty + 0.5; break; }
+      }
+    }
+    gates.push({ x:gx, y:gy, passed:false });
+    cx = gx; cy = gy;
+  }
+  G.gatesTotal = gates.length;
+  G.gatesDone = 0;
+
+  coins = [];
+  var tries = 0;
+  while(coins.length < 30 && tries < 500){
+    tries++;
+    var mx2 = 1 + Math.floor(Math.random() * 30);
+    var my2 = 1 + Math.floor(Math.random() * 30);
+    if(map[my2 * MAPW + mx2] === 0) coins.push({ x:mx2 + 0.5, y:my2 + 0.5, got:false });
+  }
+
+  if(G.mode === 'destroy'){ G.missionTargets = 5; G.missionDone = 0; }
+  if(G.mode === 'deliver'){
+    cargo = null;
+    var tries2 = 0;
+    while(!cargo && tries2 < 300){
+      tries2++;
+      var cpx = 1 + Math.floor(Math.random() * 30);
+      var cpy = 1 + Math.floor(Math.random() * 30);
+      if(map[cpy * MAPW + cpx] === 0) cargo = { x:cpx + 0.5, y:cpy + 0.5, done:false };
+    }
+    G.carryCargo = false;
+  }
+  bots = [];
+  if(G.mode === 'pvp'){
+    var bcount = 1 + G.diff;
+    var d2 = DIFFS[G.diff];
+    for(var b=0;b<bcount;b++){
+      var bxp = Math.floor(Math.random() * MAPW);
+      var byp = Math.floor(Math.random() * MAPH);
+      for(var tb=0;tb<50;tb++){
+        if(map[byp * MAPW + bxp] === 0) break;
+        bxp = Math.floor(Math.random() * MAPW);
+        byp = Math.floor(Math.random() * MAPH);
+      }
+      bots.push({ x:bxp + 0.5, y:byp + 0.5, hp:60, alive:true,
+                  cooldown:rand(0.5,1.5), speed:d2.botSpeed,
+                  damage:d2.botDmg, angle:rand(0,6.28) });
+    }
+    G.hp = G.maxHp;
+  }
+}
+function spawnDropoff(){
+  var tries = 0, dxp = 16, dyp = 16;
+  while(tries < 300){
+    tries++;
+    dxp = 1 + Math.floor(Math.random() * 30);
+    dyp = 1 + Math.floor(Math.random() * 30);
+    if(map[dyp * MAPW + dxp] === 0 && (Math.abs(dxp - px) + Math.abs(dyp - py)) > 8){
+      cargo = { x:dxp + 0.5, y:dyp + 0.5, done:false };
+      return;
+    }
+  }
+  cargo = { x:16, y:16, done:false };
+}
+
+/* ═══════════════════════ СТРЕЛЬБА ═══════════════════════ */
+function fire(){
+  var now = nowFn();
+  if(now - G.lastFire < 220) return;
+  G.lastFire = now;
+  bullets.push({ x: px + dirX*0.4, y: py + dirY*0.4, vx: dirX*12, vy: dirY*12, life:1.2 });
+}
+function updateBullets(dt){
+  for(var i=bullets.length-1;i>=0;i--){
+    var b = bullets[i];
+    b.x += b.vx * dt; b.y += b.vy * dt; b.life -= dt;
+    if(b.x < 0) b.x += MAPW; if(b.x >= MAPW) b.x -= MAPW;
+    if(b.y < 0) b.y += MAPH; if(b.y >= MAPH) b.y -= MAPH;
+    var mx = Math.floor(b.x), my = Math.floor(b.y);
+    if(mx < 0 || mx >= MAPW || my < 0 || my >= MAPH || map[my * MAPW + mx] > 0){
+      if(mx >= 0 && mx < MAPW && my >= 0 && my < MAPH && map[my * MAPW + mx] > 0){
+        map[my * MAPW + mx] = 0;
+        explosions.push({ x:b.x, y:b.y, t:0, max:0.4 });
+        if(G.mode === 'destroy'){
+          G.missionDone++; P.stats.bld++;
+          P.coins += 15; P.stats.coinsEarned += 15;
+          addXP(20); save(); checkAch(); updateHUD();
+          if(G.missionDone >= G.missionTargets) win();
+        }
+      }
+      bullets.splice(i, 1);
+      continue;
+    }
+    for(var j=0;j<bots.length;j++){
+      if(!bots[j].alive) continue;
+      var dx = b.x - bots[j].x, dy = b.y - bots[j].y;
+      if(dx*dx + dy*dy < 0.15){
+        bots[j].hp -= 25;
+        explosions.push({ x:b.x, y:b.y, t:0, max:0.3 });
+        if(bots[j].hp <= 0){
+          bots[j].alive = false;
+          G.kills++; P.stats.kills++;
+          P.coins += 50; P.stats.coinsEarned += 50;
+          addXP(50); save(); checkAch();
+          if(G.mode === 'pvp'){
+            var allDead = true;
+            for(var k=0;k<bots.length;k++) if(bots[k].alive){ allDead = false; break; }
+            if(allDead) win();
+          }
+        }
+        bullets.splice(i, 1);
+        break;
+      }
+    }
+    if(b.life <= 0) bullets.splice(i, 1);
+  }
+  for(var ei=explosions.length-1;ei>=0;ei--){
+    explosions[ei].t += dt;
+    if(explosions[ei].t > explosions[ei].max) explosions.splice(ei, 1);
+  }
+}
+
+/* ═══════════════════════ БОТЫ ═══════════════════════ */
+function updateBots(dt){
+  for(var i=0;i<bots.length;i++){
+    var b = bots[i];
+    if(!b.alive) continue;
+    var dx = px - b.x, dy = py - b.y;
+    if(dx > 16) dx -= 32; if(dx < -16) dx += 32;
+    if(dy > 16) dy -= 32; if(dy < -16) dy += 32;
+    var dist = Math.sqrt(dx*dx + dy*dy);
+    if(dist > 0.5){
+      var ang = Math.atan2(dy, dx);
+      var spd = b.speed * 1.2 * dt;
+      var nx = b.x + Math.cos(ang)*spd;
+      var ny = b.y + Math.sin(ang)*spd;
+      var nmx = Math.floor(((nx % MAPW) + MAPW) % MAPW);
+      var nmy = Math.floor(((ny % MAPH) + MAPH) % MAPH);
+      if(map[nmy * MAPW + nmx] === 0){ b.x = nx; b.y = ny; }
+      b.angle = ang;
+    }
+    b.cooldown -= dt;
+    if(dist < 6 && b.cooldown <= 0){
+      b.cooldown = rand(0.9, 1.6);
+      if(Math.random() < 0.35){
+        G.hp -= b.damage;
+        if(G.hp <= 0){ G.hp = 0; G.deaths++; P.stats.deaths++; save(); die(); }
+        updateHUD();
+      }
+    }
+  }
+}
+
+/* ═══════════════════════ СПОСОБНОСТЬ ═══════════════════════ */
+function useAbility(){
+  var dr = getDrone();
+  if(!hasAbility(dr.id)){ toast('Нужен ур.3'); return; }
+  if(G.abilityCD > 0){ toast('CD ' + G.abilityCD.toFixed(1)); return; }
+  var ab = ABILITIES[dr.id];
+  if(!ab) return;
+  G.abilityType = dr.id;
+  G.abilityTimer = ab.dur;
+  G.abilityCD = ab.cd;
+  toast('⚡ ' + ab.name);
+  if(dr.id === 'standard' || dr.id === 'sport'){
+    var fx = px + dirX * 3, fy = py + dirY * 3;
+    var fmx = Math.floor(((fx % MAPW) + MAPW) % MAPW);
+    var fmy = Math.floor(((fy % MAPH) + MAPH) % MAPH);
+    if(map[fmy * MAPW + fmx] === 0){ px = fx; py = fy; }
+  } else if(dr.id === 'mini' || dr.id === 'glider'){
+    G.invuln = ab.dur;
+  } else if(dr.id === 'heavy'){
+    for(var by=-3;by<=3;by++){
+      for(var bx=-3;bx<=3;bx++){
+        var mx = ((Math.floor(px) + bx) % MAPW + MAPW) % MAPW;
+        var my = ((Math.floor(py) + by) % MAPH + MAPH) % MAPH;
+        if(map[my * MAPW + mx] > 0){
+          map[my * MAPW + mx] = 0;
+          if(G.mode === 'destroy'){ G.missionDone++; P.stats.bld++; }
+        }
+      }
+    }
+    save(); checkAch(); updateHUD();
+  } else if(dr.id === 'racer' || dr.id === 'delta'){
+    G.invuln = 0.8;
+    bullets.length = 0;
+  }
+}
+
+/* ═══════════════════════ СМЕРТЬ / ПОБЕДА ═══════════════════════ */
+function die(){
+  G.crashes++; P.stats.crashes++; save(); checkAch();
+  if(G.mode === 'pvp'){ lose(); return; }
+  px = 16.5; py = 16.5; pa = 0; updateDir();
+  G.hp = G.maxHp;
+  pz = 0;
+  toast('КРАШ!');
+}
+function win(){
+  G.running = false;
+  var d = DIFFS[G.diff];
+  var base = 150 * d.coin;
+  if(G.crashes === 0) base += 200;
+  P.coins += base; P.stats.coinsEarned += base;
+  addXP(150);
+  if(G.mode === 'race'){ P.stats.racesWon++; if(G.diff === 2) P.stats.raceHard = true; if(G.crashes === 0) P.stats.raceClean = true; }
+  else if(G.mode === 'destroy') P.stats.destroyWins++;
+  else if(G.mode === 'deliver') P.stats.deliv++;
+  else if(G.mode === 'pvp') P.stats.pvpWins++;
+  save(); checkAch(); showWin();
+}
+function lose(){
+  G.running = false;
+  if(G.mode === 'pvp') P.stats.pvpLosses++;
+  save(); checkAch(); showWin();
+}
+function showWin(){
+  $('hud').style.display = 'none';
+  $('pauseScreen').classList.remove('show');
+  $('overlay').classList.remove('hide');
+  $('menu').style.display = 'none';
+  $('winStats').style.display = 'block';
+  var wb = $('winButtons');
+  if(wb) wb.style.display = 'block';
+  $('ovSub').textContent = 'ФИНИШ';
+  $('winTime').textContent = G.time.toFixed(1);
+  $('wX').textContent = String(G.crashes);
+  $('wC').textContent = '+' + G.coinsGot;
+  $('btnStart').textContent = 'ЕЩЁ РАЗ';
+  $('btnStart').style.display = 'inline-block';
+}
+
+/* ═══════════════════════ ГЛАВНЫЙ ЦИКЛ ═══════════════════════ */
+var lastT = 0;
+function tick(){
+  if(!G.running) return;
+  var now = nowFn();
+  var dt = (now - lastT) / 1000;
+  if(dt > 0.15) dt = 0.15;
+  if(dt < 0) dt = 0;
+  lastT = now;
+  G.time += dt;
+  G.frames++;
+
+  var w = WEATHERS[G.weather];
+
+  var dr = getDrone();
+  var mul = getMasteryMul(dr.id);
+  var spd = dr.spd * mul;
+  var turn = dr.turn * mul;
+  if(G.abilityType === 'jet' && G.abilityTimer > 0) spd *= 2;
+  if(G.abilityType === 'sport' && G.abilityTimer > 0) spd *= 1.8;
+
+  var mdx = 0, mdy = 0;
+  if(G.actions.fwd){ mdx += dirX * spd * dt; mdy += dirY * spd * dt; }
+  if(G.actions.back){ mdx -= dirX * spd * 0.5 * dt; mdy -= dirY * spd * 0.5 * dt; }
+  if(G.actions.left) pa -= turn * dt;
+  if(G.actions.right) pa += turn * dt;
+
+  if(G.actions.up)   pz += 3.0 * dt;
+  if(G.actions.down) pz -= 3.0 * dt;
+  pz = clamp(pz, -2.5, 4.0);
+
+  horizon = Math.round(H * 0.5 - pz * PITCH_K + Math.sin(G.time * 2) * 1.5);
+
+  if(w.wind > 0){
+    var windAng = G.time * 0.3;
+    mdx += Math.cos(windAng) * w.wind * dt * 0.5;
+    mdy += Math.sin(windAng) * w.wind * dt * 0.5;
+  }
+  updateDir();
+
+  var nx = px + mdx;
+  var tmx = Math.floor(((nx % MAPW) + MAPW) % MAPW);
+  var tmy = Math.floor(((py % MAPH) + MAPH) % MAPH);
+  if(map[tmy * MAPW + tmx] === 0) px = nx;
+  else if(G.invuln <= 0 && G.running) die();
+
+  var ny = py + mdy;
+  tmx = Math.floor(((px % MAPW) + MAPW) % MAPW);
+  tmy = Math.floor(((ny % MAPH) + MAPH) % MAPH);
+  if(map[tmy * MAPW + tmx] === 0) py = ny;
+  else if(G.invuln <= 0 && G.running) die();
+
+  if(px < 0) px += MAPW; if(px >= MAPW) px -= MAPW;
+  if(py < 0) py += MAPH; if(py >= MAPH) py -= MAPH;
+
+  var moved = Math.sqrt(mdx*mdx + mdy*mdy);
+  G.speed = moved / dt;
+
+  if(G.abilityCD > 0) G.abilityCD -= dt;
+  if(G.abilityTimer > 0){ G.abilityTimer -= dt; if(G.abilityTimer <= 0) G.abilityType = null; }
+  if(G.invuln > 0) G.invuln -= dt;
+
+  updateBullets(dt);
+  if(G.mode === 'pvp') updateBots(dt);
+
+  render();
+  drawMinimap();
+  updateArrow();
+
+  if(G.frames % 4 === 0){
+    updateHUD();
+    var va = $('vA');
+    if(va) va.textContent = Math.round(pz * 10);
+    P.stats.playTime += dt * 4;
+    save();
+  }
+
+  setTimeout(tick, 33);
+}
+
+/* ═══════════════════════ УПРАВЛЕНИЕ ═══════════════════════ */
+function refreshActions(){
+  G.actions.fwd = false; G.actions.back = false;
+  G.actions.left = false; G.actions.right = false;
+  G.actions.up = false; G.actions.down = false;
+  G.actions.fire = false; G.actions.ability = false;
+  for(var code in G.keys){
+    if(!G.keys[code]) continue;
+    var c = parseInt(code, 10);
+    var a = actionFor(c);
+    if(a) G.actions[a] = true;
+  }
+}
+function pushKeyHistory(code){
+  G.keyHistory.push(code);
+  if(G.keyHistory.length > 5) G.keyHistory.shift();
+  var hist = $('debugHist');
+  if(hist){
+    var parts = [];
+    for(var i=0;i<G.keyHistory.length;i++) parts.push(keyName(G.keyHistory[i]) + '(' + G.keyHistory[i] + ')');
+    hist.textContent = parts.join(', ');
+  }
+}
+document.addEventListener('keydown', function(e){
+  var k = e.keyCode || e.which;
+  G.keys[k] = true;
+  pushKeyHistory(k);
+  var dbg = $('debugKey');
+  if(dbg) dbg.textContent = keyName(k) + ' [код ' + k + ']';
+
+  if(G.captureMode){
+    e.preventDefault();
+    if(k === 27 && G.captureMode !== 'pause'){ G.captureMode = null; renderBindings(); return; }
+    BINDS[G.captureMode] = k;
+    saveBinds();
+    toast(BIND_LABELS[G.captureMode] + ' → ' + keyName(k));
+    G.captureMode = null;
+    renderBindings();
+    return;
+  }
+
+  refreshActions();
+  if(k === 37 || k === 38 || k === 39 || k === 40 || k === 32) e.preventDefault();
+
+  if(actionFor(k) === 'fire') fire();
+  if(actionFor(k) === 'ability') useAbility();
+  if(actionFor(k) === 'pause'){
+    if(G.paused) resumeGame();
+    else pauseGame();
+  }
+}, false);
+document.addEventListener('keyup', function(e){
+  var k = e.keyCode || e.which;
+  G.keys[k] = false;
+  refreshActions();
+}, false);
+
+function bindScreenBtn(id, action){
+  var el = $(id);
+  if(!el) return;
+  var pressed = false;
+  function press(e){
+    if(e){ e.preventDefault(); e.stopPropagation(); }
+    if(pressed) return;
+    pressed = true;
+    G.actions[action] = true;
+    el.classList.add('active');
+  }
+  function release(e){
+    if(e){ e.preventDefault(); e.stopPropagation(); }
+    if(!pressed) return;
+    pressed = false;
+    G.actions[action] = false;
+    el.classList.remove('active');
+  }
+  el.addEventListener('touchstart',  press,   false);
+  el.addEventListener('touchend',    release, false);
+  el.addEventListener('touchcancel', release, false);
+  el.addEventListener('mousedown',   press,   false);
+  el.addEventListener('mouseup',     release, false);
+  el.addEventListener('mouseout',    release, false);
+  el.addEventListener('mouseleave',  release, false);
+  el.addEventListener('pointerdown', press,   false);
+  el.addEventListener('pointerup',   release, false);
+  el.addEventListener('pointercancel', release, false);
+  el.addEventListener('pointerleave',  release, false);
+  el.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); }, false);
+}
+function bindScreenAction(id, fn){
+  var el = $(id);
+  if(!el) return;
+  var cooldownUntil = 0;
+  function trigger(e){
+    if(e){ e.preventDefault(); e.stopPropagation(); }
+    var now = nowFn();
+    if(now < cooldownUntil) return;
+    cooldownUntil = now + 80;
+    el.classList.add('active');
+    setTimeout(function(){ el.classList.remove('active'); }, 120);
+    fn();
+  }
+  el.addEventListener('touchstart',  trigger, false);
+  el.addEventListener('mousedown',   trigger, false);
+  el.addEventListener('pointerdown', trigger, false);
+  el.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); }, false);
+}
+bindScreenBtn('bU', 'fwd');
+bindScreenBtn('bD', 'back');
+bindScreenBtn('bL', 'left');
+bindScreenBtn('bR', 'right');
+bindScreenBtn('bUp2', 'up');
+bindScreenBtn('bDn2', 'down');
+bindScreenAction('fire', fire);
+bindScreenAction('ability', useAbility);
+
+/* ═══════════════════════ ПАУЗА ═══════════════════════ */
+function pauseGame(){
+  if(!G.running || G.paused) return;
+  G.paused = true;
+  G.running = false;
+  $('pauseScreen').classList.add('show');
+}
+function resumeGame(){
+  $('pauseScreen').classList.remove('show');
+  G.paused = false;
+  G.running = true;
+  lastT = nowFn();
+  tick();
+}
+function restartGame(){
+  $('pauseScreen').classList.remove('show');
+  G.paused = false;
+  startGame();
+}
+function goMainMenu(){
+  $('pauseScreen').classList.remove('show');
+  $('hud').style.display = 'none';
+  $('overlay').classList.remove('hide');
+  $('menu').style.display = 'block';
+  $('winStats').style.display = 'none';
+  var wb = $('winButtons');
+  if(wb) wb.style.display = 'none';
+  $('ovSub').textContent = 'ГОРОДСКАЯ ГОНКА';
+  $('btnStart').textContent = 'СТАРТ';
+  G.paused = false;
+  G.running = false;
+  updateDroneBtn();
+  updateSkinBtn();
+}
+
+$('pResume').addEventListener('click', resumeGame, false);
+$('pResume').addEventListener('touchstart', function(e){ e.preventDefault(); resumeGame(); }, false);
+$('pRestart').addEventListener('click', restartGame, false);
+$('pRestart').addEventListener('touchstart', function(e){ e.preventDefault(); restartGame(); }, false);
+$('pMenu').addEventListener('click', goMainMenu, false);
+$('pMenu').addEventListener('touchstart', function(e){ e.preventDefault(); goMainMenu(); }, false);
+$('winToMenu').addEventListener('click', goMainMenu, false);
+$('winToMenu').addEventListener('touchstart', function(e){ e.preventDefault(); goMainMenu(); }, false);
+
+/* ═══════════════════════ СТАРТ ИГРЫ ═══════════════════════ */
+function startGame(){
+  $('overlay').classList.add('hide');
+  $('hud').style.display = 'block';
+  $('winStats').style.display = 'none';
+  $('pauseScreen').classList.remove('show');
+  $('menu').style.display = 'block';
+  var wb = $('winButtons');
+  if(wb) wb.style.display = 'none';
+  G.paused = false;
+  G.running = false;
+  G.time = 0; G.crashes = 0; G.coinsGot = 0;
+  G.kills = 0; G.deaths = 0;
+  G.hp = 100; G.maxHp = 100;
+  G.carryCargo = false;
+  G.missionDone = 0; G.missionTargets = 0;
+  G.abilityCD = 0; G.abilityTimer = 0; G.abilityType = null;
+  G.invuln = 1.5; G.lastFire = 0; G.frames = 0;
+  pz = 0;
+  P.stats.weathers[G.weather] = 1;
+  setupWorld();
+  px = 16.5; py = 16.5; pa = 0; updateDir();
+  var dr = getDrone();
+  var ab = $('ability');
+  if(hasAbility(dr.id)){ ab.style.display = 'block'; ab.className = 'ready'; }
+  else { ab.style.display = 'none'; }
+  updateHUD();
+  var va = $('vA'); if(va) va.textContent = '0';
+  G.running = true;
+  lastT = nowFn();
+  tick();
+}
+
+/* ═══════════════════════ МЕНЮ ═══════════════════════ */
+function bindRow(rowId, attr, cb){
+  var row = $(rowId);
+  if(!row) return;
+  var btns = row.getElementsByTagName('button');
+  for(var i=0;i<btns.length;i++){
+    (function(btn){
+      function h(e){
+        if(e) e.preventDefault();
+        for(var j=0;j<btns.length;j++) btns[j].classList.remove('on');
+        btn.classList.add('on');
+        cb(btn.getAttribute('data-' + attr));
+      }
+      btn.addEventListener('click', h, false);
+      btn.addEventListener('touchstart', h, false);
+    })(btns[i]);
+  }
+}
+bindRow('rMission', 'm', function(v){ G.mode = v; });
+bindRow('rDiff', 'd', function(v){ G.diff = parseInt(v, 10); });
+bindRow('rTheme', 't', function(v){ G.theme = parseInt(v, 10); });
+bindRow('rWeather', 'w', function(v){ G.weather = parseInt(v, 10); });
+
+function updateDroneBtn(){
+  var dr = getDrone();
+  $('mDrone').textContent = 'ДРОН: ' + dr.name + ' · УР.' + getMasteryLevel(dr.id);
+}
+function updateSkinBtn(){ $('mSkin').textContent = 'СКИН: ' + getSkin().name; }
+updateDroneBtn(); updateSkinBtn();
+
+$('mDrone').addEventListener('click', function(){ openDroneShop(); }, false);
+$('mSkin').addEventListener('click', function(){ openSkinShop(); }, false);
+$('btnStart').addEventListener('click', startGame, false);
+$('btnStart').addEventListener('touchstart', function(e){ e.preventDefault(); startGame(); }, false);
+
+/* ═══════════════════════ ПАНЕЛИ ═══════════════════════ */
+function openPanel(html){
+  $('pBody').innerHTML = html;
+  $('panel').classList.add('show');
+}
+$('pClose').addEventListener('click', function(){ $('panel').classList.remove('show'); }, false);
+$('pClose').addEventListener('touchstart', function(e){ e.preventDefault(); $('panel').classList.remove('show'); }, false);
+
+function openSkinShop(){
+  var html = '<h2>МАГАЗИН · СКИНЫ · ' + P.coins + ' 💰</h2><div class="grid">';
+  for(var i=0;i<SKINS.length;i++){
+    var s = SKINS[i];
+    var owned = P.unlockedSkins.indexOf(s.id) >= 0;
+    var sel = P.skin === s.id;
+    var body = 'rgb(' + s.body.join(',') + ')';
+    var accent = 'rgb(' + s.accent.join(',') + ')';
+    html += '<div class="card ' + (sel?'sel':'') + '" data-skin="' + s.id + '">';
+    html += '<div class="prev" style="background:' + body + '">';
+    html += '<div class="stripe" style="background:' + accent + ';color:' + accent + '"></div>';
+    html += '<div class="glow" style="background:' + accent + ';color:' + accent + '"></div>';
+    html += '</div>';
+    html += '<div class="nm">' + s.name + '</div>';
+    if(sel) html += '<div class="st">✓</div>';
+    else if(owned) html += '<div class="st own">ВЫБРАТЬ</div>';
+    else if(P.coins >= s.price) html += '<div class="st buy">' + s.price + '💰</div>';
+    else html += '<div class="st no">' + s.price + '💰</div>';
+    html += '</div>';
+  }
+  html += '</div>';
+  openPanel(html);
+  var cards = $('pBody').getElementsByClassName('card');
+  for(var j=0;j<cards.length;j++){
+    (function(c){
+      c.addEventListener('click', function(){
+        var id = c.getAttribute('data-skin');
+        var sk = null;
+        for(var k=0;k<SKINS.length;k++) if(SKINS[k].id === id){ sk = SKINS[k]; break; }
+        if(!sk) return;
+        if(P.unlockedSkins.indexOf(id) >= 0){ P.skin = id; save(); updateSkinBtn(); openSkinShop(); }
+        else if(P.coins >= sk.price){
+          P.coins -= sk.price; P.unlockedSkins.push(id); P.skin = id;
+          P.stats.skins++; save(); checkAch();
+          toast('Куплено: ' + sk.name); updateSkinBtn(); openSkinShop();
+        } else toast('Мало монет');
+      }, false);
+    })(cards[j]);
+  }
+}
+function openDroneShop(){
+  var html = '<h2>МАГАЗИН · ДРОНЫ · ' + P.coins + ' 💰</h2><div class="grid">';
+  for(var i=0;i<DRONES.length;i++){
+    var dr = DRONES[i];
+    var owned = P.unlockedDrones.indexOf(dr.id) >= 0;
+    var sel = P.drone === dr.id;
+    var lvl = getMasteryLevel(dr.id);
+    var xp = getMastery(dr.id);
+    var accent = 'rgb(' + ABILITIES[dr.id].color.join(',') + ')';
+    html += '<div class="card ' + (sel?'sel':'') + '" data-drone="' + dr.id + '">';
+    html += '<div class="prev"><div class="stripe" style="background:' + accent + ';color:' + accent + '"></div></div>';
+    html += '<div class="nm">' + dr.name + '</div>';
+    html += '<div style="font-size:9px;opacity:.7">УР.' + lvl + ' · ' + xp + 'xp</div>';
+    if(sel) html += '<div class="st">✓</div>';
+    else if(owned) html += '<div class="st own">ВЫБРАТЬ</div>';
+    else if(P.coins >= dr.price) html += '<div class="st buy">' + dr.price + '💰</div>';
+    else html += '<div class="st no">' + dr.price + '💰</div>';
+    html += '</div>';
+  }
+  html += '</div>';
+  openPanel(html);
+  var cards = $('pBody').getElementsByClassName('card');
+  for(var j=0;j<cards.length;j++){
+    (function(c){
+      c.addEventListener('click', function(){
+        var id = c.getAttribute('data-drone');
+        var dr = null;
+        for(var k=0;k<DRONES.length;k++) if(DRONES[k].id === id){ dr = DRONES[k]; break; }
+        if(!dr) return;
+        if(P.unlockedDrones.indexOf(id) >= 0){ P.drone = id; save(); updateDroneBtn(); openDroneShop(); }
+        else if(P.coins >= dr.price){
+          P.coins -= dr.price; P.unlockedDrones.push(id); P.drone = id;
+          P.stats.drones++; save(); checkAch();
+          toast('Куплено: ' + dr.name); updateDroneBtn(); openDroneShop();
+        } else toast('Мало монет');
+      }, false);
+    })(cards[j]);
+  }
+}
+
+var profTab = 'ach';
+function openProfile(){
+  var html = '<h2>ПРОФИЛЬ</h2>';
+  var rk = getRank();
+  var next = rk < RANKS.length - 1 ? RANKS[rk+1] : null;
+  html += '<div style="text-align:center;margin-bottom:14px">';
+  html += '<div style="font-size:18px;color:#ffd040;font-weight:bold;letter-spacing:3px">' + RANKS[rk].name + '</div>';
+  html += '<div style="font-size:10px;opacity:.7;margin-top:4px">' + P.xp + ' XP' + (next?' · след. '+next.name+' ('+next.xp+')':' · МАКС') + '</div>';
+  html += '</div>';
+  html += '<div class="tabs">';
+  html += '<div class="t on" data-t="ach">ДОСТИЖЕНИЯ</div>';
+  html += '<div class="t" data-t="stat">СТАТИСТИКА</div>';
+  html += '<div class="t" data-t="rank">РАНГИ</div>';
+  html += '</div><div id="profContent"></div>';
+  openPanel(html);
+  var tabs = $('pBody').getElementsByClassName('t');
+  for(var i=0;i<tabs.length;i++){
+    (function(t){
+      t.addEventListener('click', function(){
+        profTab = t.getAttribute('data-t');
+        var all = $('pBody').getElementsByClassName('t');
+        for(var k=0;k<all.length;k++) all[k].classList.remove('on');
+        t.classList.add('on');
+        renderProfTab();
+      }, false);
+    })(tabs[i]);
+  }
+  renderProfTab();
+}
+function renderProfTab(){
+  var cont = $('profContent');
+  if(!cont) return;
+  if(profTab === 'ach'){
+    var html = '', unlocked = 0;
+    for(var i=0;i<ACH.length;i++){
+      var a = ACH[i];
+      var un = !!P.ach[a.id];
+      if(un) unlocked++;
+      html += '<div class="ach ' + (un?'un':'') + '">';
+      html += '<div class="ic">' + (un?'🏆':'🔒') + '</div>';
+      html += '<div><div class="nm">' + a.name + '</div>';
+      html += '<div class="ds">' + a.desc + '</div>';
+      html += '<div class="rw">+' + a.rw + '💰 +' + a.xp + 'xp</div></div></div>';
+    }
+    html = '<div style="text-align:center;font-size:10px;margin-bottom:8px;opacity:.7">Открыто: ' + unlocked + '/' + ACH.length + '</div>' + html;
+    cont.innerHTML = html;
+  } else if(profTab === 'stat'){
+    var s = P.stats;
+    var rows = [
+      ['Игровое время', Math.round(s.playTime) + ' сек'],
+      ['Убийств', s.kills],
+      ['Смертей', s.deaths],
+      ['Крашей', s.crashes],
+      ['Ворот пройдено', s.gates],
+      ['Зданий снесено', s.bld],
+      ['Гонок выиграно', s.racesWon],
+      ['Разрушений', s.destroyWins],
+      ['Доставок', s.deliv],
+      ['PVP побед', s.pvpWins],
+      ['PVP поражений', s.pvpLosses],
+      ['Монет заработано', s.coinsEarned]
+    ];
+    var html2 = '';
+    for(var r=0;r<rows.length;r++){
+      html2 += '<div class="ach" style="border-color:rgba(90,180,255,.3)"><div style="flex:1;font-size:11px">' + rows[r][0] + '</div><div style="color:#7cf7c0;font-weight:bold">' + rows[r][1] + '</div></div>';
+    }
+    cont.innerHTML = html2;
+  } else if(profTab === 'rank'){
+    var html3 = '', cur = getRank();
+    for(var r2=0;r2<RANKS.length;r2++){
+      var isDone = P.xp >= RANKS[r2].xp;
+      var isCur = cur === r2;
+      var bg = isCur ? 'linear-gradient(180deg,rgba(255,200,60,.3),rgba(180,120,20,.1))' : (isDone ? 'rgba(60,40,10,.5)' : 'rgba(20,14,6,.5)');
+      html3 += '<div class="ach" style="background:' + bg + ';border-color:' + (isCur?'#ffd040':(isDone?'rgba(255,200,80,.4)':'rgba(255,200,80,.15)')) + '">';
+      html3 += '<div style="flex:1"><div class="nm" style="color:' + (isDone?'#ffd040':'#8a9ab0') + '">' + RANKS[r2].name + '</div>';
+      html3 += '<div class="ds">' + RANKS[r2].xp + ' XP</div></div>';
+      if(isCur) html3 += '<div style="color:#7cf7c0;font-size:9px">ТЕКУЩИЙ</div>';
+      else if(isDone) html3 += '<div style="color:#7cf7c0;font-size:11px">✓</div>';
+      html3 += '</div>';
+    }
+    cont.innerHTML = html3;
+  }
+}
+
+$('btnShop').addEventListener('click', openSkinShop, false);
+$('btnProf').addEventListener('click', openProfile, false);
+$('btnHelp').addEventListener('click', function(){
+  var html = '<h2>КАК ИГРАТЬ</h2>' +
+    '<div style="font-size:11px;line-height:1.8;padding:0 8px">' +
+    '<p><b style="color:#0fe">УПРАВЛЕНИЕ</b></p>' +
+    '<p>↑↓ — газ вперёд/назад<br>←→ — поворот<br>Q — подъём, E — спуск<br>ПРОБЕЛ / ОГОНЬ — стрелять<br>F / ⚡ — способность<br>ESC — пауза</p>' +
+    '<p><b style="color:#0fe">РЕЖИМЫ</b></p>' +
+    '<p>ГОНКА — пролетай через кольца<br>РАЗРУШЕНИЕ — стреляй в здания<br>ДОСТАВКА — возьми груз, отнеси<br>PVP — убей красных ботов</p>' +
+    '<p><b style="color:#0fe">ВЫСОТА</b></p>' +
+    '<p>Q/E меняют высоту. Горизонт сдвигается — эффект подъёма над городом.</p>' +
+    '<p><b style="color:#0fe">МАСТЕРСТВО</b></p>' +
+    '<p>Играй на дроне, копи XP. С 3 уровня откроется способность.</p>' +
+    '</div>';
+  openPanel(html);
+}, false);
+
+/* ═══════════════════════ ПАНЕЛЬ ПРИВЯЗОК ═══════════════════════ */
+function renderBindings(){
+  var list = $('bindList');
+  if(!list) return;
+  list.innerHTML = '';
+  var keys = ['fwd', 'back', 'left', 'right', 'up', 'down', 'fire', 'ability', 'pause', 'menu'];
+  for(var i=0;i<keys.length;i++){
+    (function(k){
+      var row = document.createElement('div');
+      row.className = 'bindrow' + (G.captureMode === k ? ' wait' : '');
+      var name = document.createElement('div');
+      name.className = 'name';
+      name.textContent = BIND_LABELS[k];
+      var keyEl = document.createElement('div');
+      keyEl.className = 'key';
+      keyEl.textContent = G.captureMode === k ? 'ЖМИ...' : keyName(BINDS[k]);
+      var btn = document.createElement('div');
+      btn.className = 'btn2' + (G.captureMode === k ? ' set' : '');
+      btn.textContent = G.captureMode === k ? 'ОТМЕНА' : 'ЗАМЕНИТЬ';
+      function h(e){
+        if(e) e.preventDefault();
+        G.captureMode = (G.captureMode === k) ? null : k;
+        renderBindings();
+      }
+      btn.addEventListener('click', h, false);
+      btn.addEventListener('touchstart', h, false);
+      row.appendChild(name);
+      row.appendChild(keyEl);
+      row.appendChild(btn);
+      list.appendChild(row);
+    })(keys[i]);
+  }
+}
+function openBindPanel(){
+  renderBindings();
+  $('bindingPanel').classList.add('show');
+}
+$('btnBind').addEventListener('click', openBindPanel, false);
+$('btnBind').addEventListener('touchstart', function(e){ e.preventDefault(); openBindPanel(); }, false);
+$('bindClose').addEventListener('click', function(){
+  G.captureMode = null;
+  $('bindingPanel').classList.remove('show');
+}, false);
+$('bindClose').addEventListener('touchstart', function(e){
+  e.preventDefault();
+  G.captureMode = null;
+  $('bindingPanel').classList.remove('show');
+}, false);
+$('resetBinds').addEventListener('click', function(){
+  for(var k in BIND_DEFAULTS) BINDS[k] = BIND_DEFAULTS[k];
+  saveBinds(); renderBindings(); toast('Сброшено');
+}, false);
+$('resetBinds').addEventListener('touchstart', function(e){
+  e.preventDefault();
+  for(var k in BIND_DEFAULTS) BINDS[k] = BIND_DEFAULTS[k];
+  saveBinds(); renderBindings(); toast('Сброшено');
+}, false);
+
+/* ═══════════════════════ СТАРТ ═══════════════════════ */
+load();
+updateDroneBtn();
+updateSkinBtn();
+
+window.addEventListener('resize', function(){ setupSize(); }, false);
+window.addEventListener('orientationchange', function(){ setTimeout(setupSize, 250); }, false);
+
+for(var q=0;q<W*H;q++){ data[q*4] = 10; data[q*4+1] = 15; data[q*4+2] = 30; }
+ctx.putImageData(buf, 0, 0);
+
+})();
+</script>
+</body>
+</html>
